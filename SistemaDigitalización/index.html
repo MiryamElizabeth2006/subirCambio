@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Digitalización de Documentos</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Pantalla de Login -->
+    <div id="login-screen" class="screen active">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <h1>Sistema de Digitalización</h1>
+                    <p>Inicia sesión para continuar</p>
+                </div>
+                <form id="login-form" class="login-form">
+                    <div class="form-group">
+                        <label for="username">Usuario</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Contraseña</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Iniciar Sesión</button>
+                </form>
+                <div class="login-footer">
+                    <p>Usuario demo: admin / Contraseña: 123456</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla Principal del Sistema -->
+    <div id="main-screen" class="screen">
+        <!-- Sidebar de Navegación -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>Digitalización</h2>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item active" data-section="dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Dashboard</span>
+                </li>
+                <li class="nav-item" data-section="upload">
+                    <span class="nav-icon">📤</span>
+                    <span class="nav-text">Subir Documento</span>
+                </li>
+                <li class="nav-item" data-section="documents">
+                    <span class="nav-icon">📄</span>
+                    <span class="nav-text">Documentos</span>
+                </li>
+                <li class="nav-item" data-section="processing">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">Procesamiento</span>
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <button id="logout-btn" class="btn btn-secondary btn-full">Cerrar Sesión</button>
+            </div>
+        </nav>
+
+        <!-- Contenido Principal -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="main-header">
+                <div class="header-left">
+                    <button id="sidebar-toggle" class="sidebar-toggle">
+                        <span class="toggle-icon">☰</span>
+                    </button>
+                    <h1 id="page-title">Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <span class="user-avatar">👤</span>
+                        <span class="user-name">Administrador</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard -->
+            <section id="dashboard" class="content-section active">
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3>Documentos Procesados</h3>
+                            <span class="card-icon">📊</span>
+                        </div>
+                        <div class="card-content">
+                            <div class="stat-number">0</div>
+                            <div class="stat-label">Total procesados</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3>Pendientes</h3>
+                            <span class="card-icon">⏳</span>
+                        </div>
+                        <div class="card-content">
+                            <div class="stat-number">0</div>
+                            <div class="stat-label">En cola</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3>Precisión OCR</h3>
+                            <span class="card-icon">🎯</span>
+                        </div>
+                        <div class="card-content">
+                            <div class="stat-number">0</div>
+                            <div class="stat-label">Promedio</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3>Espacio Usado</h3>
+                            <span class="card-icon">💾</span>
+                        </div>
+                        <div class="card-content">
+                            <div class="stat-number">0 GB</div>
+                            <div class="stat-label">De 10 GB</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-charts">
+                    <div class="chart-card">
+                        <h3>Actividad Reciente</h3>
+                        <div class="activity-list">
+                            <div class="activity-item">
+                                <span class="activity-icon">📄</span>
+                                <div class="activity-content">
+                                    <div class="activity-title">Factura procesada</div>
+                                    <div class="activity-time">Hace 5 minutos</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <span class="activity-icon">✅</span>
+                                <div class="activity-content">
+                                    <div class="activity-title">Documento verificado</div>
+                                    <div class="activity-time">Hace 12 minutos</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <span class="activity-icon">📤</span>
+                                <div class="activity-content">
+                                    <div class="activity-title">Nuevo documento subido</div>
+                                    <div class="activity-time">Hace 25 minutos</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Subida de Documentos -->
+            <section id="upload" class="content-section">
+                <div class="upload-container">
+                    <div class="upload-area" id="upload-area">
+                        <div class="upload-content">
+                            <span class="upload-icon">📤</span>
+                            <h3>Arrastra y suelta tu documento aquí</h3>
+                            <p>o haz clic para seleccionar archivo</p>
+                            <p class="upload-formats">Formatos soportados: PDF, JPG, PNG</p>
+                        </div>
+                        <input type="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png" hidden>
+                    </div>
+
+                    <div id="file-preview" class="file-preview hidden">
+                        <div class="preview-header">
+                            <h3>Vista Previa del Documento</h3>
+                            <button id="remove-file" class="btn btn-danger">Eliminar</button>
+                        </div>
+                        <div class="preview-content">
+                            <div class="preview-image">
+                                <img id="preview-img" src="" alt="Vista previa">
+                            </div>
+                            <div class="file-info">
+                                <h4>Información del archivo</h4>
+                                <p><strong>Nombre:</strong> <span id="file-name"></span></p>
+                                <p><strong>Tamaño:</strong> <span id="file-size"></span></p>
+                                <p><strong>Tipo:</strong> <span id="file-type"></span></p>
+                            </div>
+                        </div>
+                        <div class="upload-actions">
+                            <button id="process-file" class="btn btn-primary">Procesar Documento</button>
+                            <button class="btn btn-secondary" onclick="validateDocument()">Validar Antes de Procesar</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Procesamiento y Visualización -->
+            <section id="processing" class="content-section">
+                <div class="processing-container">
+                    <div class="processing-header">
+                        <h3>Procesamiento de Documento</h3>
+                        <div class="processing-status">
+                            <span class="status-badge" id="processing-status">Pendiente</span>
+                        </div>
+                    </div>
+
+                    <div class="processing-content">
+                        <div class="document-view">
+                            <div class="view-tabs">
+                                <button class="tab-btn active" data-tab="original">Documento Original</button>
+                                <button class="tab-btn" data-tab="extracted">Texto Extraído</button>
+                                <button class="tab-btn" data-tab="form">Formulario</button>
+                            </div>
+                            
+                            <div class="tab-content">
+                                <div id="original-tab" class="tab-pane active">
+                                    <div class="document-display">
+                                        <img id="document-img" src="" alt="Documento">
+                                    </div>
+                                </div>
+                                
+                                <div id="extracted-tab" class="tab-pane">
+                                    <div class="extracted-text">
+                                        <textarea id="extracted-textarea" placeholder="El texto extraído aparecerá aquí..."></textarea>
+                                                                <div class="text-actions">
+                            <button class="btn btn-secondary">Copiar Texto</button>
+                            <button class="btn btn-primary">Guardar Cambios</button>
+                            <button class="btn btn-secondary">Validar Documento</button>
+                            <button class="btn btn-secondary">Análisis Avanzado</button>
+                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div id="form-tab" class="tab-pane">
+                                    <form id="document-form" class="document-form">
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="doc-type">Tipo de Documento</label>
+                                                <select id="doc-type" required>
+                                                    <option value="">Seleccionar tipo</option>
+                                                    <option value="factura">Factura</option>
+                                                    <option value="recibo">Recibo</option>
+                                                    <option value="contrato">Contrato</option>
+                                                    <option value="identificacion">Identificación</option>
+                                                    <option value="otro">Otro</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="doc-date">Fecha del Documento</label>
+                                                <input type="date" id="doc-date" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="doc-number">Número de Documento</label>
+                                                <input type="text" id="doc-number" placeholder="Ej: F001-2024">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="doc-amount">Monto (si aplica)</label>
+                                                <input type="number" id="doc-amount" step="0.01" placeholder="0.00">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="doc-description">Descripción</label>
+                                            <textarea id="doc-description" rows="3" placeholder="Descripción del documento..."></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="doc-tags">Etiquetas</label>
+                                            <input type="text" id="doc-tags" placeholder="Separadas por comas">
+                                        </div>
+                                        <div class="form-actions">
+                                            <button type="submit" class="btn btn-primary">Guardar Documento</button>
+                                            <button type="button" class="btn btn-secondary">Cancelar</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lista de Documentos -->
+            <section id="documents" class="content-section">
+                <div class="documents-container">
+                    <div class="documents-header">
+                        <h3>Documentos Digitalizados</h3>
+                        <div class="documents-actions">
+                            <div class="search-box">
+                                <input type="text" id="search-docs" placeholder="Buscar documentos...">
+                                <span class="search-icon">🔍</span>
+                            </div>
+                            <select id="filter-type" class="filter-select">
+                                <option value="">Todos los tipos</option>
+                                <option value="factura">Facturas</option>
+                                <option value="recibo">Recibos</option>
+                                <option value="contrato">Contratos</option>
+                                <option value="identificacion">Identificaciones</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="exportToExcel()">Exportar Excel</button>
+                            <button class="btn btn-secondary" onclick="exportToPDF()">Exportar PDF</button>
+                        </div>
+                    </div>
+
+                    <div class="documents-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Documento</th>
+                                    <th>Tipo</th>
+                                    <th>Fecha</th>
+                                    <th>Número</th>
+                                    <th>Monto</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="documents-tbody">
+                                <!-- Los documentos se cargarán dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal de Detalles del Documento -->
+    <div id="document-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Detalles del Documento</h3>
+                <button class="modal-close" id="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Contenido del modal se cargará dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay para cerrar sidebar en móviles -->
+    <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+    <!-- Notificaciones -->
+    <div id="notifications" class="notifications"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
