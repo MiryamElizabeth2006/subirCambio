@@ -1,169 +1,236 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withTiming, 
-  withSpring,
-  withSequence,
-  runOnJS
-} from 'react-native-reanimated';
-import { Question } from '../types';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { TriviaQuestion } from '../data/triviaQuestions';
 
 interface QuestionCardProps {
-  question: Question;
+  question: TriviaQuestion;
+  onAnswer: (selectedAnswer: number) => void;
   timeLeft: number;
-  onAnswer: (answer: number) => void;
-  isAnswered: boolean;
-  selectedAnswer?: number;
-  correctAnswer?: number;
 }
 
-const { width } = Dimensions.get('window');
-
-export const QuestionCard: React.FC<QuestionCardProps> = ({
-  question,
-  timeLeft,
-  onAnswer,
-  isAnswered,
-  selectedAnswer,
-  correctAnswer
-}) => {
-  const [localTimeLeft, setLocalTimeLeft] = useState(timeLeft);
-  const progress = useSharedValue(1);
-  const cardScale = useSharedValue(0.8);
-  const cardOpacity = useSharedValue(0);
+export default function QuestionCard({ question, onAnswer, timeLeft }: QuestionCardProps) {
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [showResult, setShowResult] = useState(false);
+  const [scaleAnim] = useState(new Animated.Value(1));
 
   useEffect(() => {
-    setLocalTimeLeft(timeLeft);
-    progress.value = withTiming(timeLeft / 30, { duration: 100 });
-  }, [timeLeft]);
-
-  useEffect(() => {
-    cardScale.value = withSpring(1, { damping: 15 });
-    cardOpacity.value = withTiming(1, { duration: 500 });
-  }, []);
-
-  const progressStyle = useAnimatedStyle(() => ({
-    width: `${progress.value * 100}%`,
-  }));
-
-  const cardStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: cardScale.value }],
-    opacity: cardOpacity.value,
-  }));
-
-  const getOptionStyle = (optionId: number) => {
-    if (!isAnswered) {
-      return 'bg-white border-2 border-gray-300';
+    if (timeLeft <= 0 && selectedAnswer === null) {
+      onAnswer(-1); // Tiempo agotado
     }
+  }, [timeLeft, selectedAnswer, onAnswer]);
+
+  const handleAnswer = (answerIndex: number) => {
+    if (selectedAnswer !== null) return;
     
-    if (optionId === correctAnswer) {
-      return 'bg-green-100 border-2 border-green-500';
+    setSelectedAnswer(answerIndex);
+    setShowResult(true);
+    
+    // Animación de respuesta
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Reproducir sonido si existe
+    if (question.sound) {
+      // Aquí se reproduciría el sonido
+      console.log(`Reproduciendo: ${question.sound}`);
     }
-    
-    if (optionId === selectedAnswer && optionId !== correctAnswer) {
-      return 'bg-red-100 border-2 border-red-500';
-    }
-    
-    return 'bg-gray-100 border-2 border-gray-300';
+
+    setTimeout(() => {
+      onAnswer(answerIndex);
+    }, 2000);
   };
 
-  const getOptionTextStyle = (optionId: number) => {
-    if (!isAnswered) {
-      return 'text-gray-800';
+  const getAnswerStyle = (index: number) => {
+    if (!showResult) {
+      return selectedAnswer === index ? styles.selectedAnswer : styles.answerButton;
+    }
+
+    if (index === question.correctAnswer) {
+      return styles.correctAnswer;
     }
     
-    if (optionId === correctAnswer) {
-      return 'text-green-800 font-bold';
+    if (index === selectedAnswer && index !== question.correctAnswer) {
+      return styles.wrongAnswer;
     }
     
-    if (optionId === selectedAnswer && optionId !== correctAnswer) {
-      return 'text-red-800 font-bold';
-    }
-    
-    return 'text-gray-600';
+    return styles.answerButton;
   };
 
-  const handleAnswer = (answer: number) => {
-    if (isAnswered) return;
+  const getAnswerTextStyle = (index: number) => {
+    if (!showResult) {
+      return selectedAnswer === index ? styles.selectedAnswerText : styles.answerText;
+    }
+
+    if (index === question.correctAnswer) {
+      return styles.correctAnswerText;
+    }
     
-    cardScale.value = withSequence(
-      withSpring(0.95, { damping: 15 }),
-      withSpring(1, { damping: 15 })
-    );
+    if (index === selectedAnswer && index !== question.correctAnswer) {
+      return styles.wrongAnswerText;
+    }
     
-    onAnswer(answer);
+    return styles.answerText;
   };
 
   return (
-    <Animated.View style={cardStyle} className="w-full px-6">
-      <View className="bg-white rounded-3xl p-6 shadow-lg">
-        {/* Barra de tiempo */}
-        <View className="mb-6">
-          <View className="h-3 bg-gray-200 rounded-full overflow-hidden">
-            <Animated.View 
-              style={progressStyle}
-              className={`h-full rounded-full ${
-                localTimeLeft > 10 ? 'bg-green-500' : 
-                localTimeLeft > 5 ? 'bg-yellow-500' : 'bg-red-500'
-              }`}
-            />
+    <Animated.View style={[styles.container, { transform: [{ scale: scaleAnim }] }]}>
+      <View style={styles.questionContainer}>
+        <Text style={styles.category}>
+          {question.category === 'semaforo' ? '🚦 SEMÁFORO' : 
+           question.category === 'paso_cebra' ? '🦓 PASO CEBRA' : 
+           '🚸 SEÑALÉTICAS'}
+        </Text>
+        
+        <View style={styles.imageContainer}>
+          <Text style={styles.questionImage}>{question.image}</Text>
+        </View>
+        
+        <Text style={styles.questionText}>{question.question}</Text>
+        
+        {showResult && (
+          <View style={styles.explanationContainer}>
+            <Text style={styles.explanationText}>{question.explanation}</Text>
           </View>
-          <Text className="text-center mt-2 text-lg font-bold text-gray-700">
-            ⏰ {localTimeLeft}s
-          </Text>
-        </View>
+        )}
+      </View>
 
-        {/* Pregunta */}
-        <View className="mb-8">
-          <Text className="text-2xl font-bold text-center text-gray-800 leading-relaxed">
-            {question.text}
-          </Text>
-        </View>
-
-        {/* Opciones */}
-        <View className="space-y-4">
-          {question.options.map((option, index) => (
-            <TouchableOpacity
-              key={option.id}
-              onPress={() => handleAnswer(option.id)}
-              disabled={isAnswered}
-              className={`p-4 rounded-2xl ${getOptionStyle(option.id)} ${
-                !isAnswered ? 'active:scale-95' : ''
-              }`}
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 3,
-              }}
-            >
-              <View className="flex-row items-center space-x-4">
-                <Text className="text-4xl">{option.icon}</Text>
-                <Text className={`text-lg font-semibold flex-1 ${getOptionTextStyle(option.id)}`}>
-                  {option.text}
-                </Text>
-                {isAnswered && option.id === correctAnswer && (
-                  <Text className="text-2xl">✅</Text>
-                )}
-                {isAnswered && option.id === selectedAnswer && option.id !== correctAnswer && (
-                  <Text className="text-2xl">❌</Text>
-                )}
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Indicador de categoría */}
-        <View className="mt-6 bg-primary-100 rounded-full py-2 px-4 self-center">
-          <Text className="text-primary-700 font-semibold text-center">
-            📚 {question.category}
-          </Text>
-        </View>
+      <View style={styles.answersContainer}>
+        {question.options.map((option, index) => (
+          <TouchableOpacity
+            key={index}
+            style={getAnswerStyle(index)}
+            onPress={() => handleAnswer(index)}
+            disabled={selectedAnswer !== null}
+          >
+            <Text style={getAnswerTextStyle(index)}>
+              {String.fromCharCode(65 + index)}. {option}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
     </Animated.View>
   );
-};
+}
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#1a1a2e',
+  },
+  questionContainer: {
+    backgroundColor: '#16213e',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  category: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ffd700',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  imageContainer: {
+    backgroundColor: '#0f3460',
+    borderRadius: 50,
+    width: 100,
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  questionImage: {
+    fontSize: 50,
+  },
+  questionText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  explanationContainer: {
+    backgroundColor: '#0f3460',
+    borderRadius: 15,
+    padding: 15,
+    marginTop: 10,
+  },
+  explanationText: {
+    fontSize: 16,
+    color: '#ffd700',
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  answersContainer: {
+    flex: 1,
+    justifyContent: 'space-around',
+  },
+  answerButton: {
+    backgroundColor: '#16213e',
+    borderRadius: 15,
+    padding: 20,
+    marginVertical: 8,
+    borderWidth: 2,
+    borderColor: '#0f3460',
+  },
+  selectedAnswer: {
+    backgroundColor: '#3B82F6',
+    borderRadius: 15,
+    padding: 20,
+    marginVertical: 8,
+    borderWidth: 2,
+    borderColor: '#1D4ED8',
+  },
+  correctAnswer: {
+    backgroundColor: '#10B981',
+    borderRadius: 15,
+    padding: 20,
+    marginVertical: 8,
+    borderWidth: 2,
+    borderColor: '#059669',
+  },
+  wrongAnswer: {
+    backgroundColor: '#EF4444',
+    borderRadius: 15,
+    padding: 20,
+    marginVertical: 8,
+    borderWidth: 2,
+    borderColor: '#DC2626',
+  },
+  answerText: {
+    fontSize: 18,
+    color: '#ffffff',
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  selectedAnswerText: {
+    fontSize: 18,
+    color: '#ffffff',
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  correctAnswerText: {
+    fontSize: 18,
+    color: '#ffffff',
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  wrongAnswerText: {
+    fontSize: 18,
+    color: '#ffffff',
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+});

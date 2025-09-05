@@ -10,16 +10,28 @@ import {
   Dimensions
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import MobileFrame from './src/components/MobileFrame';
+import CatAvatar, { catAvatars } from './src/components/CatAvatar';
+import RoomSelector from './src/components/RoomSelector';
+import QuestionCard from './src/components/QuestionCard';
+import Podium from './src/components/Podium';
+import { getRandomQuestions, TriviaQuestion } from './src/data/triviaQuestions';
 
 const { width } = Dimensions.get('window');
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('login');
   const [playerName, setPlayerName] = useState('');
-  const [selectedAvatar, setSelectedAvatar] = useState('🚗');
+  const [selectedAvatar, setSelectedAvatar] = useState('cat1');
   const [selectedAge, setSelectedAge] = useState('5-7');
+  const [gameMode, setGameMode] = useState<'solo' | 'pairs' | 'group'>('solo');
+  const [roomCode, setRoomCode] = useState('');
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
+  const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(30);
+  const [players, setPlayers] = useState<any[]>([]);
 
-  const avatars = ['🚗', '🚲', '🚦', '🚶‍♂️', '🚌', '🚑'];
   const ageGroups = [
     { value: '5-7', label: '5-7 años', icon: '👶' },
     { value: '8-10', label: '8-10 años', icon: '👦' },
@@ -31,18 +43,75 @@ export default function App() {
       Alert.alert('¡Ups!', 'Por favor escribe tu nombre (mínimo 2 letras)');
       return;
     }
-    setCurrentScreen('menu');
+    setCurrentScreen('room-selector');
   };
 
-  const handleStartGame = () => {
-    Alert.alert('¡Juego iniciado!', `¡Hola ${playerName}! Tu avatar es ${selectedAvatar} y tienes ${selectedAge} años.`);
+  const handleJoinRoom = (code: string, mode: 'solo' | 'pairs' | 'group') => {
+    setRoomCode(code);
+    setGameMode(mode);
+    startGame();
+  };
+
+  const handleCreateRoom = (mode: 'pairs' | 'group') => {
+    const newRoomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+    setRoomCode(newRoomCode);
+    setGameMode(mode);
+    startGame();
+  };
+
+  const startGame = () => {
+    const gameQuestions = getRandomQuestions(10);
+    setQuestions(gameQuestions);
+    setCurrentQuestion(0);
+    setScore(0);
+    setTimeLeft(30);
+    setCurrentScreen('game');
+  };
+
+  const handleAnswer = (selectedAnswer: number) => {
+    const question = questions[currentQuestion];
+    if (selectedAnswer === question.correctAnswer) {
+      setScore(score + 10);
+    }
+
+    setTimeout(() => {
+      if (currentQuestion < questions.length - 1) {
+        setCurrentQuestion(currentQuestion + 1);
+        setTimeLeft(30);
+      } else {
+        endGame();
+      }
+    }, 2000);
+  };
+
+  const endGame = () => {
+    if (gameMode === 'solo') {
+      setCurrentScreen('solo-results');
+    } else {
+      // Simular otros jugadores para el podio
+      const mockPlayers = [
+        { id: '1', name: playerName, avatar: selectedAvatar, score: score, position: 1 },
+        { id: '2', name: 'Gatito Azul', avatar: 'cat1', score: Math.max(0, score - 20), position: 2 },
+        { id: '3', name: 'Gatita Rosa', avatar: 'cat2', score: Math.max(0, score - 30), position: 3 },
+      ];
+      setPlayers(mockPlayers);
+      setCurrentScreen('podium');
+    }
+  };
+
+  const handlePlayAgain = () => {
+    startGame();
+  };
+
+  const handleBackToMenu = () => {
+    setCurrentScreen('room-selector');
   };
 
   const renderLogin = () => (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
-        <Text style={styles.title}>🚦 Educación Vial</Text>
-        <Text style={styles.subtitle}>¡Aprende jugando sobre seguridad vial!</Text>
+        <Text style={styles.title}>🚦 Trivia Educación Vial</Text>
+        <Text style={styles.subtitle}>¡Aprende jugando con gatitos!</Text>
       </View>
 
       <View style={styles.section}>
@@ -58,19 +127,15 @@ export default function App() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🎭 Elige tu Avatar</Text>
+        <Text style={styles.sectionTitle}>🐱 Elige tu Gatito</Text>
         <View style={styles.avatarContainer}>
-          {avatars.map((avatar, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => setSelectedAvatar(avatar)}
-              style={[
-                styles.avatarButton,
-                selectedAvatar === avatar && styles.avatarButtonSelected
-              ]}
-            >
-              <Text style={styles.avatarText}>{avatar}</Text>
-            </TouchableOpacity>
+          {Object.keys(catAvatars).map((avatarKey) => (
+            <CatAvatar
+              key={avatarKey}
+              avatar={avatarKey}
+              isSelected={selectedAvatar === avatarKey}
+              onSelect={setSelectedAvatar}
+            />
           ))}
         </View>
       </View>
@@ -101,6 +166,60 @@ export default function App() {
         <Text style={styles.startButtonText}>¡Empezar a Jugar! 🎮</Text>
       </TouchableOpacity>
     </ScrollView>
+  );
+
+  const renderRoomSelector = () => (
+    <RoomSelector
+      onJoinRoom={handleJoinRoom}
+      onCreateRoom={handleCreateRoom}
+    />
+  );
+
+  const renderGame = () => {
+    if (questions.length === 0) return null;
+    
+    return (
+      <View style={styles.gameContainer}>
+        <View style={styles.gameHeader}>
+          <Text style={styles.gameTitle}>Pregunta {currentQuestion + 1} de {questions.length}</Text>
+          <Text style={styles.scoreText}>Puntos: {score}</Text>
+          <Text style={styles.timeText}>⏰ {timeLeft}s</Text>
+        </View>
+        <QuestionCard
+          question={questions[currentQuestion]}
+          onAnswer={handleAnswer}
+          timeLeft={timeLeft}
+        />
+      </View>
+    );
+  };
+
+  const renderSoloResults = () => (
+    <View style={styles.container}>
+      <View style={styles.resultsContainer}>
+        <Text style={styles.resultsTitle}>🎉 ¡Excelente trabajo!</Text>
+        <Text style={styles.resultsSubtitle}>Has completado la trivia</Text>
+        
+        <View style={styles.scoreContainer}>
+          <Text style={styles.finalScore}>{score}</Text>
+          <Text style={styles.scoreLabel}>Puntos</Text>
+        </View>
+        
+        <View style={styles.accuracyContainer}>
+          <Text style={styles.accuracyText}>
+            {Math.round((score / (questions.length * 10)) * 100)}% de aciertos
+          </Text>
+        </View>
+        
+        <TouchableOpacity style={styles.playAgainButton} onPress={handlePlayAgain}>
+          <Text style={styles.playAgainText}>🔄 Jugar Otra Vez</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.backButton} onPress={handleBackToMenu}>
+          <Text style={styles.backText}>🏠 Volver al Menú</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 
   const renderMenu = () => (
@@ -147,57 +266,68 @@ export default function App() {
   );
 
   return (
-    <View style={styles.container}>
+    <MobileFrame>
       <StatusBar style="auto" />
-      {currentScreen === 'login' ? renderLogin() : renderMenu()}
-    </View>
+      {currentScreen === 'login' && renderLogin()}
+      {currentScreen === 'room-selector' && renderRoomSelector()}
+      {currentScreen === 'game' && renderGame()}
+      {currentScreen === 'solo-results' && renderSoloResults()}
+      {currentScreen === 'podium' && (
+        <Podium
+          players={players}
+          onPlayAgain={handlePlayAgain}
+          onBackToMenu={handleBackToMenu}
+        />
+      )}
+    </MobileFrame>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0fdf4',
+    backgroundColor: '#1a1a2e',
   },
   contentContainer: {
-    padding: 20,
-    paddingTop: 60,
+    padding: 15,
+    paddingTop: 40,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 30,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#16a34a',
+    color: '#ffd700',
     textAlign: 'center',
     marginBottom: 10,
   },
   subtitle: {
-    fontSize: 18,
-    color: '#6b7280',
+    fontSize: 16,
+    color: '#ffffff',
     textAlign: 'center',
   },
   section: {
-    marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#16a34a',
-    textAlign: 'center',
     marginBottom: 20,
   },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#ffd700',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
   input: {
-    backgroundColor: 'white',
+    backgroundColor: '#16213e',
     borderWidth: 2,
-    borderColor: '#86efac',
+    borderColor: '#ffd700',
     borderRadius: 16,
     padding: 16,
-    fontSize: 20,
+    fontSize: 18,
     textAlign: 'center',
     fontWeight: '600',
+    color: '#ffffff',
   },
   avatarContainer: {
     flexDirection: 'row',
@@ -360,6 +490,104 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: 'white',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  // Estilos para el juego
+  gameContainer: {
+    flex: 1,
+    backgroundColor: '#1a1a2e',
+  },
+  gameHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#16213e',
+  },
+  gameTitle: {
+    fontSize: 16,
+    color: '#ffd700',
+    fontWeight: 'bold',
+  },
+  scoreText: {
+    fontSize: 16,
+    color: '#10B981',
+    fontWeight: 'bold',
+  },
+  timeText: {
+    fontSize: 16,
+    color: '#EF4444',
+    fontWeight: 'bold',
+  },
+  // Estilos para resultados
+  resultsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  resultsTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#ffd700',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  resultsSubtitle: {
+    fontSize: 18,
+    color: '#ffffff',
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+  scoreContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  finalScore: {
+    fontSize: 60,
+    fontWeight: 'bold',
+    color: '#10B981',
+  },
+  scoreLabel: {
+    fontSize: 20,
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  accuracyContainer: {
+    backgroundColor: '#16213e',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 30,
+  },
+  accuracyText: {
+    fontSize: 18,
+    color: '#ffd700',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  playAgainButton: {
+    backgroundColor: '#10B981',
+    borderRadius: 15,
+    padding: 20,
+    alignItems: 'center',
+    marginBottom: 15,
+    width: '100%',
+  },
+  playAgainText: {
+    color: '#ffffff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  backButton: {
+    backgroundColor: '#6B7280',
+    borderRadius: 15,
+    padding: 20,
+    alignItems: 'center',
+    width: '100%',
+  },
+  backText: {
+    color: '#ffffff',
+    fontSize: 20,
     fontWeight: 'bold',
   },
 });

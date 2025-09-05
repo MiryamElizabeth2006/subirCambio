@@ -1,236 +1,260 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withSpring,
-  withDelay,
-  withSequence
-} from 'react-native-reanimated';
-import { GameResult } from '../types';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { catAvatars } from './CatAvatar';
+
+interface Player {
+  id: string;
+  name: string;
+  avatar: string;
+  score: number;
+  position: number;
+}
 
 interface PodiumProps {
-  results: GameResult[];
+  players: Player[];
   onPlayAgain: () => void;
   onBackToMenu: () => void;
 }
 
-export const Podium: React.FC<PodiumProps> = ({ 
-  results, 
-  onPlayAgain, 
-  onBackToMenu 
-}) => {
-  const sortedResults = [...results].sort((a, b) => b.score - a.score);
-  const topThree = sortedResults.slice(0, 3);
-
+export default function Podium({ players, onPlayAgain, onBackToMenu }: PodiumProps) {
+  const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+  
   const getPodiumHeight = (position: number) => {
     switch (position) {
-      case 0: return 120; // Oro
-      case 1: return 80;  // Plata
-      case 2: return 60;  // Bronce
+      case 1: return 120; // Oro
+      case 2: return 80;  // Plata
+      case 3: return 60;  // Bronce
       default: return 40;
     }
   };
 
   const getPodiumColor = (position: number) => {
     switch (position) {
-      case 0: return 'bg-yellow-400';
-      case 1: return 'bg-gray-300';
-      case 2: return 'bg-orange-400';
-      default: return 'bg-gray-200';
+      case 1: return '#FFD700'; // Oro
+      case 2: return '#C0C0C0'; // Plata
+      case 3: return '#CD7F32'; // Bronce
+      default: return '#6B7280';
     }
   };
 
-  const getMedalIcon = (position: number) => {
+  const getMedalEmoji = (position: number) => {
     switch (position) {
-      case 0: return '🥇';
-      case 1: return '🥈';
-      case 2: return '🥉';
+      case 1: return '🥇';
+      case 2: return '🥈';
+      case 3: return '🥉';
       default: return '🏅';
     }
   };
 
-  const PodiumItem: React.FC<{ 
-    result: GameResult; 
-    position: number; 
-    delay: number 
-  }> = ({ result, position, delay }) => {
-    const scale = useSharedValue(0);
-    const translateY = useSharedValue(50);
-
-    React.useEffect(() => {
-      scale.value = withDelay(delay, withSpring(1, { damping: 15 }));
-      translateY.value = withDelay(delay, withSpring(0, { damping: 15 }));
-    }, []);
-
-    const animatedStyle = useAnimatedStyle(() => ({
-      transform: [
-        { scale: scale.value },
-        { translateY: translateY.value }
-      ],
-    }));
-
-    return (
-      <Animated.View 
-        style={animatedStyle}
-        className="items-center"
-      >
-        {/* Jugador */}
-        <View className="items-center mb-4">
-          <View className="w-20 h-20 rounded-full bg-primary-100 items-center justify-center mb-2">
-            <Text className="text-3xl">🎮</Text>
-          </View>
-          <Text className="text-lg font-bold text-gray-800 text-center">
-            {result.playerName}
-          </Text>
-          <Text className="text-2xl font-bold text-primary-600">
-            {result.score} pts
-          </Text>
-          <Text className="text-sm text-gray-600">
-            {result.correctAnswers}/{result.totalAnswers} correctas
-          </Text>
-        </View>
-
-        {/* Podio */}
-        <View 
-          className={`${getPodiumColor(position)} rounded-t-2xl items-center justify-center`}
-          style={{ 
-            width: 80, 
-            height: getPodiumHeight(position),
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 8,
-            elevation: 8,
-          }}
-        >
-          <Text className="text-3xl mb-1">
-            {getMedalIcon(position)}
-          </Text>
-          <Text className="text-white font-bold text-lg">
-            #{position + 1}
-          </Text>
-        </View>
-      </Animated.View>
-    );
-  };
-
-  const Fireworks: React.FC = () => {
-    const scale = useSharedValue(0);
-    const opacity = useSharedValue(0);
-
-    React.useEffect(() => {
-      scale.value = withDelay(1000, withSequence(
-        withSpring(1.2, { damping: 15 }),
-        withSpring(1, { damping: 15 })
-      ));
-      opacity.value = withDelay(1000, withSpring(1, { duration: 500 }));
-    }, []);
-
-    const animatedStyle = useAnimatedStyle(() => ({
-      transform: [{ scale: scale.value }],
-      opacity: opacity.value,
-    }));
-
-    return (
-      <Animated.View 
-        style={animatedStyle}
-        className="absolute top-10 left-0 right-0 items-center"
-      >
-        <Text className="text-6xl">🎉</Text>
-        <Text className="text-4xl mt-2">🎊</Text>
-        <Text className="text-6xl mt-2">🎈</Text>
-      </Animated.View>
-    );
-  };
-
   return (
-    <View className="flex-1 bg-gradient-to-b from-primary-50 to-white">
-      <Fireworks />
+    <View style={styles.container}>
+      <Text style={styles.title}>🏆 ¡Resultados Finales!</Text>
       
-      {/* Título */}
-      <View className="items-center pt-16 pb-8">
-        <Text className="text-4xl font-bold text-primary-600 mb-2">
-          🏆 ¡Juego Terminado!
-        </Text>
-        <Text className="text-lg text-gray-600 text-center">
-          ¡Excelente trabajo aprendiendo sobre educación vial!
-        </Text>
-      </View>
-
-      {/* Podio */}
-      <View className="flex-1 justify-end px-6">
-        <View className="flex-row justify-center items-end space-x-4 mb-8">
-          {topThree.map((result, index) => (
-            <PodiumItem
-              key={result.playerId}
-              result={result}
-              position={index}
-              delay={index * 200}
-            />
-          ))}
-        </View>
-
-        {/* Lista completa de resultados */}
-        {sortedResults.length > 3 && (
-          <View className="bg-white rounded-2xl p-4 mb-6 shadow-lg">
-            <Text className="text-lg font-bold text-center mb-4 text-gray-800">
-              📊 Resultados Completos
-            </Text>
-            {sortedResults.slice(3).map((result, index) => (
-              <View key={result.playerId} className="flex-row items-center justify-between py-2">
-                <View className="flex-row items-center">
-                  <Text className="text-lg font-bold text-gray-600 w-8">
-                    #{index + 4}
-                  </Text>
-                  <Text className="text-base font-semibold text-gray-800 ml-2">
-                    {result.playerName}
-                  </Text>
-                </View>
-                <Text className="text-base font-bold text-primary-600">
-                  {result.score} pts
-                </Text>
-              </View>
-            ))}
+      <View style={styles.podiumContainer}>
+        {/* Segundo lugar */}
+        {sortedPlayers[1] && (
+          <View style={styles.podiumPosition}>
+            <View style={[styles.podium, { 
+              height: getPodiumHeight(2), 
+              backgroundColor: getPodiumColor(2) 
+            }]}>
+              <Text style={styles.medal}>{getMedalEmoji(2)}</Text>
+            </View>
+            <View style={styles.playerInfo}>
+              <Text style={styles.playerAvatar}>
+                {catAvatars[sortedPlayers[1].avatar as keyof typeof catAvatars]?.emoji}
+              </Text>
+              <Text style={styles.playerName}>{sortedPlayers[1].name}</Text>
+              <Text style={styles.playerScore}>{sortedPlayers[1].score} pts</Text>
+            </View>
           </View>
         )}
 
-        {/* Botones de acción */}
-        <View className="space-y-4 mb-8">
-          <TouchableOpacity
-            onPress={onPlayAgain}
-            className="bg-primary-500 py-4 rounded-2xl items-center"
-            style={{
-              shadowColor: '#22c55e',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              elevation: 8,
-            }}
-          >
-            <Text className="text-white text-xl font-bold">
-              🔄 Jugar de Nuevo
-            </Text>
-          </TouchableOpacity>
+        {/* Primer lugar */}
+        {sortedPlayers[0] && (
+          <View style={styles.podiumPosition}>
+            <View style={[styles.podium, { 
+              height: getPodiumHeight(1), 
+              backgroundColor: getPodiumColor(1) 
+            }]}>
+              <Text style={styles.medal}>{getMedalEmoji(1)}</Text>
+            </View>
+            <View style={styles.playerInfo}>
+              <Text style={styles.playerAvatar}>
+                {catAvatars[sortedPlayers[0].avatar as keyof typeof catAvatars]?.emoji}
+              </Text>
+              <Text style={styles.playerName}>{sortedPlayers[0].name}</Text>
+              <Text style={styles.playerScore}>{sortedPlayers[0].score} pts</Text>
+            </View>
+          </View>
+        )}
 
-          <TouchableOpacity
-            onPress={onBackToMenu}
-            className="bg-gray-500 py-4 rounded-2xl items-center"
-            style={{
-              shadowColor: '#6b7280',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              elevation: 8,
-            }}
-          >
-            <Text className="text-white text-xl font-bold">
-              🏠 Volver al Menú
+        {/* Tercer lugar */}
+        {sortedPlayers[2] && (
+          <View style={styles.podiumPosition}>
+            <View style={[styles.podium, { 
+              height: getPodiumHeight(3), 
+              backgroundColor: getPodiumColor(3) 
+            }]}>
+              <Text style={styles.medal}>{getMedalEmoji(3)}</Text>
+            </View>
+            <View style={styles.playerInfo}>
+              <Text style={styles.playerAvatar}>
+                {catAvatars[sortedPlayers[2].avatar as keyof typeof catAvatars]?.emoji}
+              </Text>
+              <Text style={styles.playerName}>{sortedPlayers[2].name}</Text>
+              <Text style={styles.playerScore}>{sortedPlayers[2].score} pts</Text>
+            </View>
+          </View>
+        )}
+      </View>
+
+      {/* Lista completa de jugadores */}
+      <View style={styles.rankingList}>
+        <Text style={styles.rankingTitle}>📊 Clasificación Completa</Text>
+        {sortedPlayers.map((player, index) => (
+          <View key={player.id} style={styles.rankingItem}>
+            <Text style={styles.rankingPosition}>#{index + 1}</Text>
+            <Text style={styles.rankingAvatar}>
+              {catAvatars[player.avatar as keyof typeof catAvatars]?.emoji}
             </Text>
-          </TouchableOpacity>
-        </View>
+            <Text style={styles.rankingName}>{player.name}</Text>
+            <Text style={styles.rankingScore}>{player.score} pts</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Botones de acción */}
+      <View style={styles.actionButtons}>
+        <TouchableOpacity style={styles.playAgainButton} onPress={onPlayAgain}>
+          <Text style={styles.playAgainText}>🔄 Jugar Otra Vez</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.backButton} onPress={onBackToMenu}>
+          <Text style={styles.backText}>🏠 Volver al Menú</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
-};
+}
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#1a1a2e',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#ffd700',
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+  podiumContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    marginBottom: 30,
+    height: 200,
+  },
+  podiumPosition: {
+    alignItems: 'center',
+    marginHorizontal: 10,
+  },
+  podium: {
+    width: 80,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+    elevation: 8,
+  },
+  medal: {
+    fontSize: 30,
+  },
+  playerInfo: {
+    alignItems: 'center',
+  },
+  playerAvatar: {
+    fontSize: 40,
+    marginBottom: 5,
+  },
+  playerName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    textAlign: 'center',
+  },
+  playerScore: {
+    fontSize: 14,
+    color: '#ffd700',
+    fontWeight: 'bold',
+  },
+  rankingList: {
+    backgroundColor: '#16213e',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 30,
+  },
+  rankingTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#ffd700',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  rankingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#0f3460',
+  },
+  rankingPosition: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffd700',
+    width: 40,
+  },
+  rankingAvatar: {
+    fontSize: 24,
+    marginHorizontal: 15,
+  },
+  rankingName: {
+    flex: 1,
+    fontSize: 16,
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  rankingScore: {
+    fontSize: 16,
+    color: '#ffd700',
+    fontWeight: 'bold',
+  },
+  actionButtons: {
+    gap: 15,
+  },
+  playAgainButton: {
+    backgroundColor: '#10B981',
+    borderRadius: 15,
+    padding: 20,
+    alignItems: 'center',
+  },
+  playAgainText: {
+    color: '#ffffff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  backButton: {
+    backgroundColor: '#6B7280',
+    borderRadius: 15,
+    padding: 20,
+    alignItems: 'center',
+  },
+  backText: {
+    color: '#ffffff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+});
